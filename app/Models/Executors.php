@@ -8,4 +8,22 @@ use Illuminate\Database\Eloquent\Model;
 class Executors extends Model
 {
     use HasFactory;
+
+    protected $guarded = ['id'];
+    public $timestamps = true;
+
+    public function role()
+    {
+        return Roles::all();
+    }
+
+    public function user()
+    {
+        return 0;
+    }
+
+    public function task()
+    {
+        return Task::all();
+    }
 }
