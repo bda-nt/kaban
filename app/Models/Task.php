@@ -17,7 +17,7 @@ class Task extends Model
         1 => 'Test Project #1',
         2 => 'Test Project #2',
         3 => 'Test Project #3',
-    ]
+    ];
 
     use HasFactory;
 
