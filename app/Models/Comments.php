@@ -10,6 +10,9 @@ class Comments extends Model
 {
     use HasFactory;
 
+    protected $connection = 'kaban';
+    protected $table = '';
+
     protected $guarded = ['id'];
     public $timestamps = true;
 
