@@ -9,6 +9,9 @@ class Stages extends Model
 {
     use HasFactory;
 
+    protected $connection = 'kaban';
+    protected $table = 'stages';
+
     protected $guarded = ['id'];
     public $timestamps = true;
 

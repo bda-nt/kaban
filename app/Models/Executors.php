@@ -9,6 +9,9 @@ class Executors extends Model
 {
     use HasFactory;
 
+    protected $connection = 'kaban';
+    protected $table = 'executors';
+
     protected $guarded = ['id'];
     public $timestamps = true;
 
