@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * App\Models\Executors
@@ -41,9 +42,9 @@ class Executors extends Model
         return $this->hasOne(Roles::class);
     }
 
-    public function user()
+    public function user() : HasOne
     {
-        return;
+        return $this->hasOne(\App\Models\Auth\User::class, 'id', 'user_id');
     }
 
     public function task()
@@ -51,4 +52,3 @@ class Executors extends Model
         return $this->hasOne(Task::class);
     }
 }
-21
