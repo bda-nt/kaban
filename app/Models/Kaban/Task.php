@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use App\Models\Auth\Command;
+use App\Models\Auth\Project;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * App\Models\Task
@@ -44,18 +47,6 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Task extends Model
 {
-    const TEAM = [
-        1 => 'Оценка',
-        2 => 'Канбан',
-        3 => 'Гант'
-    ];
-
-    const PROJECT = [
-        1 => 'Test Project #1',
-        2 => 'Test Project #2',
-        3 => 'Test Project #3',
-    ];
-
     use HasFactory;
 
     protected $connection = 'kaban';
@@ -68,14 +59,14 @@ class Task extends Model
      * @param int $id
      * @return String
      */
-    public function team(int $id) : String
+    public function team(int $id) : HasOne
     {
-        return self::TEAM[$id];
+        return $this->hasOne(Command::class, 'id', 'team_id');
     }
 
-    public function project(int $id) : string
+    public function project() : HasOne
     {
-        return self::PROJECT[$id];
+        return $this->hasOne(Project::class, 'id', 'project_id');
     }
 
     public function parents(int $id): \Illuminate\Database\Eloquent\Builder|Task
