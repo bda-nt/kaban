@@ -16,8 +16,13 @@ class ProjectController extends Controller
     {
         // получать список проектов, в которых ты есть
         /** @var User $user */
-        $user = Auth::user();
-        return ProjectResource::collection($user->getAtctiveProject());
+        //$user = Auth::user();
+        //return ProjectResource::collection($user->getAtctiveProject());
+
+
+
+        $projects = Project::all();
+        return $projects
     }
 
     /**
