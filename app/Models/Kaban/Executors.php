@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Kaban;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -42,7 +42,7 @@ class Executors extends Model
         return $this->hasOne(Roles::class);
     }
 
-    public function user() : HasOne
+    public function user(): HasOne
     {
         return $this->hasOne(\App\Models\Auth\User::class, 'id', 'user_id');
     }

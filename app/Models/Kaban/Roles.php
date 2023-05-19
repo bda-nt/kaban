@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Kaban;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -33,7 +33,7 @@ class Roles extends Model
     ];
     public $timestamps = true;
 
-    public function executors() : HasMany
+    public function executors(): HasMany
     {
         return $this->hasMany(Executors::class);
     }

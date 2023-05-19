@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+
+use App\Models\Kaban\Task;
+use App\Models\Auth\Command;
+use App\Models\Auth\Project;
 use Illuminate\Http\Request;
 
 class TaskController extends Controller
@@ -13,9 +17,26 @@ class TaskController extends Controller
      */
     public function index()
     {
+        $dataBaseName = (new Project)->getConnection()->getDatabaseName();
+        $tableProjectName = (new Project)->getTable();
+        $dbTableProject = $dataBaseName . "." . $tableProjectName;
+
+        $tableTeamName = (new Command)->getTable();
+        $dbTableTeam = $dataBaseName . "." . $tableTeamName;
+
+        $tasks = Task::join($dbTableProject, function ($join) use ($dbTableProject) {
+            $join->on($dbTableProject . ".id", "=", "tasks.project_id");
+        })
+            ->join($dbTableTeam, function ($join) use ($dbTableTeam) {
+                $join->on($dbTableTeam . ".id", "=", "tasks.team_id");
+            })
+            ->get();
+        return $tasks;
 
 
-        $tasks = Task::all();
+
+        //Task::all();
+
         // нужно join между task, project, team
         // возвращать название задачи
         // id задачи
@@ -36,42 +57,42 @@ class TaskController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
-    {
-      
-        $task = Task::create([
-            'parent_id' => $request->parent_id,
-            'project_id' => $request->project_id,
-            'team_id' => $request->team_id,
-            'name' => $request->name,
-            'is_on_kanban' => false,
-            'is_completed' => false,
-            'status_id' => 1, // В работу
-            'planned_start_date' => $request->planned_start_date,
-            'planned_final_date' => $request->planned_final_date,
-            'deadline' => $request->deadline,
-            'completed_at' => null,
-            'description' => $request->description,
-        ]);
-        $executors = Executors::create([
-            'task_id' => $task->id,
-            'user_id' => $request->user_id, // переделать на авторизированного пользователя
-            'role_id' => 1, // ответственный
-            'time_spent' => 0
-        ]);
+    // public function store(Request $request)
+    // {
+
+    //     $task = Task::create([
+    //         'parent_id' => $request->parent_id,
+    //         'project_id' => $request->project_id,
+    //         'team_id' => $request->team_id,
+    //         'name' => $request->name,
+    //         'is_on_kanban' => false,
+    //         'is_completed' => false,
+    //         'status_id' => 1, // В работу
+    //         'planned_start_date' => $request->planned_start_date,
+    //         'planned_final_date' => $request->planned_final_date,
+    //         'deadline' => $request->deadline,
+    //         'completed_at' => null,
+    //         'description' => $request->description,
+    //     ]);
+    //     $executors = Executors::create([
+    //         'task_id' => $task->id,
+    //         'user_id' => $request->user_id, // переделать на авторизированного пользователя
+    //         'role_id' => 1, // ответственный
+    //         'time_spent' => 0
+    //     ]);
 
 
-        $stages = array();
-        $res = [];
-        if ($request->stages !== null) {
-            foreach ($request->stages as $key => $stage) {
-                $stages[] = new Stage(['description' => $stage, 'is_ready' => false]);
-            }
-            $res = $task->stages()->saveMany($stages);
-        }
-     
-        return $res = ["task" => $task, "stages" => $res, "executors" => $executors];
-    }
+    //     $stages = array();
+    //     $res = [];
+    //     if ($request->stages !== null) {
+    //         foreach ($request->stages as $key => $stage) {
+    //             $stages[] = new Stage(['description' => $stage, 'is_ready' => false]);
+    //         }
+    //         $res = $task->stages()->saveMany($stages);
+    //     }
+
+    //     return $res = ["task" => $task, "stages" => $res, "executors" => $executors];
+    // }
 
     /**
      * Display the specified resource.
@@ -98,37 +119,37 @@ class TaskController extends Controller
 
 
 
-        $task = Task::join()
+        // $task = Task::join()
 
 
-        $task = Task::join('projects', function ($join) {
-            $join->on("tasks.project_id", "=", "projects.id");
-        })
-            ->join('users', function ($join) {
-                $join->on("tasks.contractor_id", "=", "users.id");
-            })
-            ->join('statuses', function ($join) {
-                $join->on("tasks.status_id", "=", "statuses.id");
-            })
-            ->join('priorities', function ($join) {
-                $join->on("tasks.priority_id", "=", "priorities.id");
-            })
-            ->where('tasks.project_id', '=', $request->projectId)
-            ->select([
-                'projects.name AS project_name', 'tasks.project_id',
-                'tasks.id AS task_id', 'tasks.name AS task_name',
-                'tasks.contractor_id', 'users.name AS contractor_name',
-                'users.surname AS contractor_surname',
-                'tasks.priority_id', 'priorities.name AS priority_name',
-                'tasks.status_id', 'statuses.name AS status_name',
-                'tasks.deadline', 'tasks.description', 'tasks.actual_time',
-            ])
-            ->find($request->taskId);
-        $stages = Stage::where('task_id', '=', $request->taskId)
-            ->get(['stages.id', 'stages.description', 'stages.is_ready']);
-        
-        $task->stages = $stages;
-        return $task;
+        // $task = Task::join('projects', function ($join) {
+        //     $join->on("tasks.project_id", "=", "projects.id");
+        // })
+        //     ->join('users', function ($join) {
+        //         $join->on("tasks.contractor_id", "=", "users.id");
+        //     })
+        //     ->join('statuses', function ($join) {
+        //         $join->on("tasks.status_id", "=", "statuses.id");
+        //     })
+        //     ->join('priorities', function ($join) {
+        //         $join->on("tasks.priority_id", "=", "priorities.id");
+        //     })
+        //     ->where('tasks.project_id', '=', $request->projectId)
+        //     ->select([
+        //         'projects.name AS project_name', 'tasks.project_id',
+        //         'tasks.id AS task_id', 'tasks.name AS task_name',
+        //         'tasks.contractor_id', 'users.name AS contractor_name',
+        //         'users.surname AS contractor_surname',
+        //         'tasks.priority_id', 'priorities.name AS priority_name',
+        //         'tasks.status_id', 'statuses.name AS status_name',
+        //         'tasks.deadline', 'tasks.description', 'tasks.actual_time',
+        //     ])
+        //     ->find($request->taskId);
+        // $stages = Stage::where('task_id', '=', $request->taskId)
+        //     ->get(['stages.id', 'stages.description', 'stages.is_ready']);
+
+        // $task->stages = $stages;
+        // return $task;
     }
 
     /**
@@ -156,7 +177,7 @@ class TaskController extends Controller
                 ->update($inputArr);
         }
         Task::where('id', '=', $request->taskId)
-        ->update($inputArr);
+            ->update($inputArr);
     }
 
     /**

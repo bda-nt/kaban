@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Kaban;
 
 use App\Models\Auth\Command;
 use App\Models\Auth\Project;
@@ -59,12 +59,12 @@ class Task extends Model
      * @param int $id
      * @return String
      */
-    public function team(int $id) : HasOne
+    public function team(int $id): HasOne
     {
         return $this->hasOne(Command::class, 'id', 'team_id');
     }
 
-    public function project() : HasOne
+    public function project(): HasOne
     {
         return $this->hasOne(Project::class, 'id', 'project_id');
     }
