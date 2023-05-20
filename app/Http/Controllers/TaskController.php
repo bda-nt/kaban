@@ -96,7 +96,7 @@ class TaskController extends Controller
             $res = $task->stages()->saveMany($stages);
         }
 
-        return $res = ["task" => $task, "stages" => $res, "executors" => $executors];
+        return $res = ["task" => $task, "executors" => $executors, "stages" => $res,];
     }
 
     /**

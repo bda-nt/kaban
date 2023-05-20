@@ -4,9 +4,10 @@ namespace App\Models\Kaban;
 
 use App\Models\Auth\Command;
 use App\Models\Auth\Project;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Kaban\Stages;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 /**
  * App\Models\Task
@@ -72,5 +73,10 @@ class Task extends Model
     public function parents(int $id): \Illuminate\Database\Eloquent\Builder|Task
     {
         return Task::whereId($id);
+    }
+
+    public function stages()
+    {
+        return $this->hasMany(Stages::class, 'task_id', 'id');
     }
 }
