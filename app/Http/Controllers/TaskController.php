@@ -7,9 +7,13 @@ use App\Models\Auth\User;
 use App\Models\Kaban\Task;
 use App\Models\Auth\Command;
 use App\Models\Auth\Project;
-use Illuminate\Http\Request;
-use App\Models\Kaban\Executors;
 use App\Models\Kaban\Stages;
+use Illuminate\Http\Request;
+use App\Models\Kaban\Comments;
+use App\Models\Kaban\Executors;
+use App\Http\Requests\TaskShowRequest;
+use App\Http\Requests\TaskUpdateRequest;
+use App\Http\Requests\TaskDestroyRequest;
 
 class TaskController extends Controller
 {
@@ -48,9 +52,9 @@ class TaskController extends Controller
             ->get([
                 "tasks.id AS task_id", "tasks.name AS task_name",
                 "tasks.project_id", $dbTableProject . ".title AS project_name",
-                "tasks.team_id", $dbTableTeam . ".title AS team_name", $dbTableTeam . ".teg AS team_teg",
+                "tasks.team_id", $dbTableTeam . ".title AS team_name", $dbTableTeam . ".teg AS team_tag",
                 "executors.id AS responsible_id", $dbTableUser . ".first_name AS responsible_first_name",
-                $dbTableUser . ".last_name AS responsible_last_name",
+                $dbTableUser . ".last_name AS responsible_last_name", $dbTableUser . ".patronymic AS responsible_patronymic",
                 "tasks.deadline"
             ]);
         return $tasks;
@@ -64,7 +68,6 @@ class TaskController extends Controller
      */
     public function store(Request $request)
     {
-
         $task = Task::create([
             'parent_id' => $request->parent_id,
             'project_id' => $request->project_id,
@@ -105,56 +108,71 @@ class TaskController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(TaskShowRequest $request)
     {
-        // join task и team и project.
-        // вернуть название задачи
-        // статус задачи
-        // название проекта
-        // дедлайн
-        // тег команды
-        // планируемая дата начала
-        // планируемая дата финала
-        // описание задачи
-        // фио ответственного
-        // чек лист
-        // затраченное время
-        // комментарии
-        // 
 
+        $dataBaseName = (new Project)->getConnection()->getDatabaseName();
 
+        $tableProjectName = (new Project)->getTable();
+        $dbTableProject = $dataBaseName . "." . $tableProjectName;
 
-        // $task = Task::join()
+        $tableTeamName = (new Command)->getTable();
+        $dbTableTeam = $dataBaseName . "." . $tableTeamName;
 
+        $tableUserName = (new User)->getTable();
+        $dbTableUser = $dataBaseName . "." . $tableUserName;
 
-        // $task = Task::join('projects', function ($join) {
-        //     $join->on("tasks.project_id", "=", "projects.id");
-        // })
-        //     ->join('users', function ($join) {
-        //         $join->on("tasks.contractor_id", "=", "users.id");
-        //     })
-        //     ->join('statuses', function ($join) {
-        //         $join->on("tasks.status_id", "=", "statuses.id");
-        //     })
-        //     ->join('priorities', function ($join) {
-        //         $join->on("tasks.priority_id", "=", "priorities.id");
-        //     })
-        //     ->where('tasks.project_id', '=', $request->projectId)
-        //     ->select([
-        //         'projects.name AS project_name', 'tasks.project_id',
-        //         'tasks.id AS task_id', 'tasks.name AS task_name',
-        //         'tasks.contractor_id', 'users.name AS contractor_name',
-        //         'users.surname AS contractor_surname',
-        //         'tasks.priority_id', 'priorities.name AS priority_name',
-        //         'tasks.status_id', 'statuses.name AS status_name',
-        //         'tasks.deadline', 'tasks.description', 'tasks.actual_time',
-        //     ])
-        //     ->find($request->taskId);
-        // $stages = Stage::where('task_id', '=', $request->taskId)
-        //     ->get(['stages.id', 'stages.description', 'stages.is_ready']);
+        $task = Task::join($dbTableProject, function ($join) use ($dbTableProject) {
+            $join->on($dbTableProject . ".id", "=", "tasks.project_id");
+        })
+            ->join($dbTableTeam, function ($join) use ($dbTableTeam) {
+                $join->on($dbTableTeam . ".id", "=", "tasks.team_id");
+            })
+            ->join("executors", function ($join) {
+                $join->on("executors.task_id", "=", "tasks.id");
+            })
+            ->join($dbTableUser, function ($join) use ($dbTableUser) {
+                $join->on($dbTableUser . ".id", "=", "executors.user_id");
+            })
+            ->join("statuses", function ($join) {
+                $join->on("tasks.status_id", "=", "statuses.id");
+            })
+            ->where('executors.role_id', '=', 1) // Ответственный
+            ->select([
+                "tasks.parent_id", "tasks.id AS task_id", "tasks.name AS task_name",
+                "tasks.project_id", $dbTableProject . ".title AS project_name",
+                "tasks.team_id", $dbTableTeam . ".title AS team_name", $dbTableTeam . ".teg AS team_tag",
+                "executors.id AS responsible_id", $dbTableUser . ".first_name AS responsible_first_name",
+                $dbTableUser . ".last_name AS responsible_last_name", $dbTableUser . ".patronymic AS responsible_patronymic",
+                "executors.time_spent AS responsible_time_spent",
+                "tasks.deadline", "tasks.planned_start_date", "tasks.planned_final_date",
+                "tasks.is_on_kanban", "tasks.is_completed",
+                "tasks.status_id", "statuses.name AS status_name",
+                "tasks.completed_at", "tasks.description",
+            ])
+            ->find($request->taskId);
 
-        // $task->stages = $stages;
-        // return $task;
+        if ($task !== null) {
+            $stages = Stages::where('task_id', '=', $request->taskId)
+                ->get(['stages.id', 'stages.description', 'stages.is_ready']);
+
+            $comments = Comments::join($dbTableUser, function ($join) use ($dbTableUser) {
+                $join->on($dbTableUser . ".id", "=", "comments.user_id");
+            })
+                ->where('task_id', '=', $request->taskId)
+                ->get([
+                    'comments.id', 'comments.user_id AS author_id',
+                    $dbTableUser . ".first_name AS author_first_name",
+                    $dbTableUser . ".last_name AS author_last_name",
+                    $dbTableUser . ".patronymic AS author_patronymic",
+                    'comments.content', "comments.created_at",
+                ]);
+
+            $task->stages = $stages;
+            $task->comments = $comments;
+        }
+
+        return $task;
     }
 
     /**
@@ -164,7 +182,7 @@ class TaskController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(TaskUpdateRequest $request)
     {
         $inputArr = $request->valid;
         $stages = false;
@@ -175,14 +193,55 @@ class TaskController extends Controller
         if (sizeof($inputArr) !== 0) {
             if ($request->status_id === 2) { // статус = Выполнено
                 $inputArr["completed_at"] = now();
-                // добавить is_completed true и убрать с канбана?
+                $inputArr["is_completed"] = true;
             }
-            Task::where('project_id', '=', $request->projectId)
-                ->where('id', '=', $request->taskId)
+            Task::where('id', '=', $request->taskId)
                 ->update($inputArr);
         }
-        Task::where('id', '=', $request->taskId)
-            ->update($inputArr);
+
+        if ($stages !== false) {
+            foreach ($stages as $key => $stage) {
+                if (!array_key_exists("id", $stage)) {
+                    Stages::create([
+                        'task_id' => $request->taskId,
+                        'description' => $stage['description'],
+                        'is_ready' => $stage['is_ready']
+                    ]);
+                } else {
+                    // Так сделано. Так как поля в stage не валидируются. Могут быть лишние поля, например stage["test"]
+                    // Есди сделать один запрос для всех ифов.
+                    if (!array_key_exists("description", $stage) && !array_key_exists("is_ready", $stage)) {
+                        Stages::where('task_id', '=', $request->taskId)
+                            ->where('id', '=', $stage["id"])
+                            ->delete();
+                    }
+                    if (array_key_exists("description", $stage) && array_key_exists("is_ready", $stage)) {
+                        Stages::where('task_id', '=', $request->taskId)
+                            ->where('id', '=', $stage["id"])
+                            ->update([
+                                'is_ready' => $stage['is_ready'],
+                                'description' => $stage['description']
+                            ]);
+                    }
+                    if (!array_key_exists("description", $stage) && array_key_exists("is_ready", $stage)) {
+                        Stages::where('task_id', '=',  $request->taskId)
+                            ->where('id', '=', $stage["id"])
+                            ->update([
+                                'is_ready' => $stage['is_ready']
+                            ]);
+                    }
+                    if (array_key_exists("description", $stage) && !array_key_exists("is_ready", $stage)) {
+                        Stages::where('task_id', '=', $request->taskId)
+                            ->where('id', '=', $stage["id"])
+                            ->update([
+                                'description' => $stage['description']
+                            ]);
+                    }
+                }
+            }
+        }
+
+        return response(["message" => 'Успех'], 200);
     }
 
     /**
@@ -191,8 +250,10 @@ class TaskController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(TaskDestroyRequest $request)
     {
-        //
+        Task::where('id', '=', $request->taskId)
+            ->delete();
+        return response(["message" => 'Успех'], 200);
     }
 }

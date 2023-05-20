@@ -2,9 +2,9 @@
 
 namespace App\Models\Kaban;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Kaban\Task;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Auth\Task;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 /**
  * App\Models\Comments
@@ -18,7 +18,7 @@ class Comments extends Model
     use HasFactory;
 
     protected $connection = 'kaban';
-    protected $table = '';
+    protected $table = 'comments';
 
     protected $guarded = ['id'];
     public $timestamps = true;
