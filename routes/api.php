@@ -6,6 +6,7 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\StatusController;
+use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ProjectController;
 
 /*
@@ -49,6 +50,13 @@ Route::controller(TaskController::class)->group(function () {
         Route::post('/', 'store');
         Route::get('/{taskId}', 'show')->whereNumber('taskId');
         Route::put('/{taskId}', 'update')->whereNumber('taskId');
-        //Route::delete('/{taskId}', 'destroy')->whereNumber('taskId');
+        Route::delete('/{taskId}', 'destroy')->whereNumber('taskId');
+    });
+});
+
+Route::controller(CommentController::class)->group(function () {
+    Route::prefix('/comments')->group(function () {
+        Route::post('/', 'store');
+        Route::delete('/', 'destroy');
     });
 });

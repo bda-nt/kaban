@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Auth\User;
 use Illuminate\Http\Request;
+use App\Models\Kaban\Comments;
+use App\Http\Requests\CommentStoreRequest;
+use App\Http\Requests\CommentDestroyRequest;
 
-class UserController extends Controller
+class CommentController extends Controller
 {
-
     /**
      * Display a listing of the resource.
      *
@@ -15,10 +16,7 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = User::all([
-            "id", "first_name", "last_name", "patronymic"
-        ]);
-        return $users;
+        //
     }
 
     /**
@@ -27,9 +25,15 @@ class UserController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(CommentStoreRequest $request)
     {
-        //
+        $comment = Comments::create([
+            'task_id' => $request->task_id,
+            'user_id' => $request->author_id, // TODO переделать на id авторизированного пользователя
+            'content' => $request->content,
+
+        ]);
+        return $comment;
     }
 
     /**
@@ -61,8 +65,10 @@ class UserController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(CommentDestroyRequest $request)
     {
-        //
+        Comments::where('id', '=', $request->comment_id)
+            ->delete();
+        return response(["message" => 'Успех'], 200);
     }
 }
