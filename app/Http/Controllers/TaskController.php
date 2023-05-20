@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 
+use App\Models\Auth\User;
 use App\Models\Kaban\Task;
 use App\Models\Auth\Command;
 use App\Models\Auth\Project;
 use Illuminate\Http\Request;
+use App\Models\Kaban\Executors;
+use App\Models\Kaban\Stages;
 
 class TaskController extends Controller
 {
@@ -18,11 +21,15 @@ class TaskController extends Controller
     public function index()
     {
         $dataBaseName = (new Project)->getConnection()->getDatabaseName();
+
         $tableProjectName = (new Project)->getTable();
         $dbTableProject = $dataBaseName . "." . $tableProjectName;
 
         $tableTeamName = (new Command)->getTable();
         $dbTableTeam = $dataBaseName . "." . $tableTeamName;
+
+        $tableUserName = (new User)->getTable();
+        $dbTableUser = $dataBaseName . "." . $tableUserName;
 
         $tasks = Task::join($dbTableProject, function ($join) use ($dbTableProject) {
             $join->on($dbTableProject . ".id", "=", "tasks.project_id");
@@ -30,25 +37,23 @@ class TaskController extends Controller
             ->join($dbTableTeam, function ($join) use ($dbTableTeam) {
                 $join->on($dbTableTeam . ".id", "=", "tasks.team_id");
             })
-            ->get();
+            ->join("executors", function ($join) {
+                $join->on("executors.task_id", "=", "tasks.id");
+            })
+            ->join($dbTableUser, function ($join) use ($dbTableUser) {
+                $join->on($dbTableUser . ".id", "=", "executors.user_id");
+            })
+            ->where('tasks.is_on_kanban', '=', true)
+            ->where('executors.role_id', '=', 1) // Ответственный
+            ->get([
+                "tasks.id AS task_id", "tasks.name AS task_name",
+                "tasks.project_id", $dbTableProject . ".title AS project_name",
+                "tasks.team_id", $dbTableTeam . ".title AS team_name", $dbTableTeam . ".teg AS team_teg",
+                "executors.id AS responsible_id", $dbTableUser . ".first_name AS responsible_first_name",
+                $dbTableUser . ".last_name AS responsible_last_name",
+                "tasks.deadline"
+            ]);
         return $tasks;
-
-
-
-        //Task::all();
-
-        // нужно join между task, project, team
-        // возвращать название задачи
-        // id задачи
-        // название проекта
-        // id проекта
-        // тег команды
-        // id команды
-        // фамилия имя ответственного
-        // id ответственного
-        // дату дедлайна
-
-
     }
 
     /**
@@ -57,42 +62,42 @@ class TaskController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    // public function store(Request $request)
-    // {
+    public function store(Request $request)
+    {
 
-    //     $task = Task::create([
-    //         'parent_id' => $request->parent_id,
-    //         'project_id' => $request->project_id,
-    //         'team_id' => $request->team_id,
-    //         'name' => $request->name,
-    //         'is_on_kanban' => false,
-    //         'is_completed' => false,
-    //         'status_id' => 1, // В работу
-    //         'planned_start_date' => $request->planned_start_date,
-    //         'planned_final_date' => $request->planned_final_date,
-    //         'deadline' => $request->deadline,
-    //         'completed_at' => null,
-    //         'description' => $request->description,
-    //     ]);
-    //     $executors = Executors::create([
-    //         'task_id' => $task->id,
-    //         'user_id' => $request->user_id, // переделать на авторизированного пользователя
-    //         'role_id' => 1, // ответственный
-    //         'time_spent' => 0
-    //     ]);
+        $task = Task::create([
+            'parent_id' => $request->parent_id,
+            'project_id' => $request->project_id,
+            'team_id' => $request->team_id,
+            'name' => $request->name,
+            'is_on_kanban' => false,
+            'is_completed' => false,
+            'status_id' => 1, // В работу
+            'planned_start_date' => $request->planned_start_date,
+            'planned_final_date' => $request->planned_final_date,
+            'deadline' => $request->deadline,
+            'completed_at' => null,
+            'description' => $request->description,
+        ]);
+        $executors = Executors::create([
+            'task_id' => $task->id,
+            'user_id' => $request->responsible_id, // добавить автора создания с авторизованного пользователя
+            'role_id' => 1, // ответственный
+            'time_spent' => 0
+        ]);
 
 
-    //     $stages = array();
-    //     $res = [];
-    //     if ($request->stages !== null) {
-    //         foreach ($request->stages as $key => $stage) {
-    //             $stages[] = new Stage(['description' => $stage, 'is_ready' => false]);
-    //         }
-    //         $res = $task->stages()->saveMany($stages);
-    //     }
+        $stages = array();
+        $res = [];
+        if ($request->stages !== null) {
+            foreach ($request->stages as $key => $stage) {
+                $stages[] = new Stages(['description' => $stage, 'is_ready' => false]);
+            }
+            $res = $task->stages()->saveMany($stages);
+        }
 
-    //     return $res = ["task" => $task, "stages" => $res, "executors" => $executors];
-    // }
+        return $res = ["task" => $task, "stages" => $res, "executors" => $executors];
+    }
 
     /**
      * Display the specified resource.

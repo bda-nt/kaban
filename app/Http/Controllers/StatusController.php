@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Status;
+use App\Models\Kaban\Status;
 use Illuminate\Http\Request;
-use App\Http\Resources\StatusResource;
 
 class StatusController extends Controller
 {
@@ -16,7 +15,7 @@ class StatusController extends Controller
     public function index()
     {
         $statuses = Status::all();
-        return $statuses
+        return $statuses;
     }
 
     /**

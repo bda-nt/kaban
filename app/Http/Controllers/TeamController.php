@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Auth\Command;
 use Illuminate\Http\Request;
 
 class TeamController extends Controller
@@ -11,13 +12,10 @@ class TeamController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index() // TODO сделать возврат по id проекта
+    public function index()
     {
-        // возвращать команды по проекту
-        /** @var User $user */
-
-        // $user = Auth::user();
-        // return ProjectResource::collection($user->getAtctiveProject());
+        $teams = Command::all();
+        return $teams;
     }
 
     /**
