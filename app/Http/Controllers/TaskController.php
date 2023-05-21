@@ -184,7 +184,9 @@ class TaskController extends Controller
      */
     public function update(TaskUpdateRequest $request)
     {
-        $inputArr = $request->valid;
+        //$inputArr = $request->valid;
+        $inputArr = $request->toArray();
+        unset($inputArr["taskId"]);
         $stages = false;
         if (array_key_exists("stages", $inputArr)) {
             $stages = $inputArr["stages"];
@@ -254,6 +256,7 @@ class TaskController extends Controller
     {
         Task::where('id', '=', $request->taskId)
             ->delete();
+
         return response(["message" => 'Успех'], 200);
     }
 }
