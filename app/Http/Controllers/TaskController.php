@@ -47,6 +47,9 @@ class TaskController extends Controller
             ->join($dbTableUser, function ($join) use ($dbTableUser) {
                 $join->on($dbTableUser . ".id", "=", "executors.user_id");
             })
+            ->join("statuses", function ($join) {
+                $join->on("tasks.status_id", "=", "statuses.id");
+            })
             ->where('tasks.is_on_kanban', '=', true)
             ->where('executors.role_id', '=', 1) // Ответственный
             ->get([
@@ -55,7 +58,7 @@ class TaskController extends Controller
                 "tasks.team_id", $dbTableTeam . ".title AS team_name", $dbTableTeam . ".teg AS team_tag",
                 "executors.id AS responsible_id", $dbTableUser . ".first_name AS responsible_first_name",
                 $dbTableUser . ".last_name AS responsible_last_name", $dbTableUser . ".patronymic AS responsible_patronymic",
-                "tasks.deadline"
+                "tasks.deadline", "tasks.status_id", "statuses.name AS status_name",
             ]);
         return $tasks;
     }
