@@ -196,7 +196,7 @@ class TaskController extends Controller
             unset($inputArr["stages"]);
         }
         if (sizeof($inputArr) !== 0) {
-            if ($request->status_id === 2) { // статус = Выполнено
+            if ($request->status_id === 5) { // статус = Выполнено
                 $inputArr["completed_at"] = now();
                 $inputArr["is_completed"] = true;
             }
