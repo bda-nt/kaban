@@ -56,7 +56,7 @@ class TaskController extends Controller
                 "tasks.id AS task_id", "tasks.name AS task_name",
                 "tasks.project_id", $dbTableProject . ".title AS project_name",
                 "tasks.team_id", $dbTableTeam . ".title AS team_name", $dbTableTeam . ".teg AS team_tag",
-                "executors.id AS responsible_id", $dbTableUser . ".first_name AS responsible_first_name",
+                "executors.user_id AS responsible_id", $dbTableUser . ".first_name AS responsible_first_name",
                 $dbTableUser . ".last_name AS responsible_last_name", $dbTableUser . ".patronymic AS responsible_patronymic",
                 "tasks.deadline", "tasks.status_id", "statuses.name AS status_name",
             ]);
